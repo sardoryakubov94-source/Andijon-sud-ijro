@@ -1,4 +1,4 @@
-const CACHE='sud-ijro-v6';
+const CACHE='sud-ijro-v7';
 const SELF_URL = self.location.pathname.replace(/sw\.js$/, 'Andijon_Sud_Ijro-19-6.html');
 
 self.addEventListener('install', e=>{
