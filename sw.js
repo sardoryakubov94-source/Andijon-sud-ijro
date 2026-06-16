@@ -1,5 +1,5 @@
-const CACHE='sud-ijro-v18';
-const SELF_URL = self.location.pathname.replace(/sw\.js$/, 'index-9.html');
+const CACHE='sud-ijro-v19';
+const SELF_URL = self.location.pathname.replace(/sw\.js$/, 'index.html');
 
 self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.add(SELF_URL).catch(()=>{})));
