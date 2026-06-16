@@ -1,4 +1,4 @@
-const CACHE='sud-ijro-v17';
+const CACHE='sud-ijro-v18';
 const SELF_URL = self.location.pathname.replace(/sw\.js$/, 'index-9.html');
 
 self.addEventListener('install', e=>{
