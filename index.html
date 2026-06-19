@@ -2694,20 +2694,19 @@ updateHomeJonli();
 // DATA dan kuchgaKirishSana bo'lgan, hali alerts ga qo'shilmagan ishlarni tekshirish
 (function syncKuchgaAlerts(){
   try{
-    // Eski alertlarni tozalab, DATA dan qaytadan to'g'ri yuklaymiz
-    // a.sana = qanoatlantrilgan sana (mibSana +10/+30 qo'shadi)
     const oldAlerts=alertsLoad();
-    // done=true bo'lganlarni saqlab qolamiz
     const doneAlerts=oldAlerts.filter(a=>a.done);
     const newAlerts=[...doneAlerts];
+    // done bo'lgan fio+tur juftliklari
+    const doneKeys=new Set(doneAlerts.map(a=>a.fio+'|'+a.hujjatTuri));
     DATA.forEach(d=>{
-      if(d.buyruqKuchga){
+      if(d.buyruqKuchga && !doneKeys.has(d.fio+'|buyruq')){
         newAlerts.push({id:Date.now()+d.n*2, fio:d.fio, sana:d.buyruqKuchga, hujjatTuri:'buyruq', done:false});
       }
-      if(d.davoKuchga){
+      if(d.davoKuchga && !doneKeys.has(d.fio+'|davo')){
         newAlerts.push({id:Date.now()+d.n*2+1, fio:d.fio, sana:d.davoKuchga, hujjatTuri:'davo', done:false});
       }
-      if(!d.buyruqKuchga&&!d.davoKuchga&&d.kuchgaKirishSana&&d.arizaTuri){
+      if(!d.buyruqKuchga&&!d.davoKuchga&&d.kuchgaKirishSana&&d.arizaTuri&&!doneKeys.has(d.fio+'|'+d.arizaTuri)){
         newAlerts.push({id:Date.now()+d.n, fio:d.fio, sana:d.kuchgaKirishSana, hujjatTuri:d.arizaTuri, done:false});
       }
     });
