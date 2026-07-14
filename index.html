@@ -583,7 +583,7 @@ select{background:var(--bg);border:1px solid var(--b);color:var(--t);padding:5px
   </div>
 </div>
 
-<div class="modal-ov" id="confirm-ov" onclick="if(event.target===this)confirmClose()" style="z-index:300">
+<div class="modal-ov" id="confirm-ov" onclick="if(event.target===this)confirmClose()" style="z-index:460">
   <div class="modal" style="max-width:280px;padding:14px;text-align:center">
     <div style="font-size:13px;color:var(--t);margin-bottom:14px" id="confirm-text"></div>
     <div style="display:flex;gap:8px;justify-content:center">
@@ -3113,7 +3113,55 @@ document.addEventListener('click',()=>{
     _mkalOpen=null;
   }
 });
+/* ============================================================
+   ORQAGA QAYTISH (back) TUGMASI + DASTURDAN CHIQISH
+   ------------------------------------------------------------
+   Brauzer/qurilma "orqaga" tugmasi bosilganda:
+     1) Agar kichik sana-tanlash popup (mini-kalendar) ochiq bo'lsa — shu popup yopiladi.
+     2) Aks holda, agar biror oyna (modal) ochiq bo'lsa — ENG USTKI (z-index bo'yicha)
+        oyna yopiladi (bir nechta oyna ustma-ust ochilgan holatlarni ham to'g'ri boshqaradi).
+     3) Aks holda, bosh sahifadan (home) boshqa bo'limda bo'lsak — bosh sahifaga qaytadi.
+     4) Bosh sahifada, hech narsa ochiq bo'lmasa — ketma-ket 2 marta bosilganda
+        dasturdan chiqishga harakat qilinadi (1-bosishda ogohlantirish chiqadi).
+   ============================================================ */
 (function(){
+  // Har bir modal ID'si uchun mos "yopish" funksiyasi (ba'zilarida qo'shimcha holat
+  // tozalash logikasi bor — masalan xisIzohClose _xisIzohN ni ham tozalaydi)
+  const MODAL_CLOSE_FN={
+    'nazorat-modal-ov':()=>nazoratMClose(),
+    'qd-modal-ov':()=>qdQoshClose(),
+    'natija-modal-ov':()=>natijaMClose(),
+    'edit-modal-ov':()=>closeEditModal(),
+    'holat-modal-ov':()=>holatModalClose(),
+    'confirm-ov':()=>confirmClose(),
+    'xis-izoh-ov':()=>xisIzohClose(),
+    'modal-ov':()=>closeModal(),
+    'sync-modal-ov':()=>closeSyncModal()
+  };
+
+  // Joriy ochiq bo'lgan ENG USTKI oynani (eng katta z-index) topib yopadi.
+  // Nimadir yopilgan bo'lsa true, aks holda false qaytaradi.
+  function closeTopModal(){
+    // Avval kichik sana-tanlash popup (mini-kalendar) ochiqmi — tekshiramiz
+    if(typeof _mkalOpen!=='undefined' && _mkalOpen){
+      const pop=document.getElementById('mkal-pop-'+_mkalOpen);
+      if(pop) pop.style.display='none';
+      _mkalOpen=null;
+      return true;
+    }
+    const openModals=[...document.querySelectorAll('.modal-ov.on')];
+    if(!openModals.length) return false;
+    // z-index bo'yicha eng ustkisini topamiz (bir nechta oyna ustma-ust ochilgan bo'lsa ham to'g'ri ishlaydi)
+    let top=openModals[0], topZ=parseInt(getComputedStyle(top).zIndex)||0;
+    openModals.forEach(m=>{
+      const z=parseInt(getComputedStyle(m).zIndex)||0;
+      if(z>=topZ){ top=m; topZ=z; }
+    });
+    const fn=MODAL_CLOSE_FN[top.id];
+    if(fn) fn(); else top.classList.remove('on');
+    return true;
+  }
+
   // Toast
   const toast=document.createElement('div');
   toast.textContent='Chiqish uchun yana bir marta bosing';
@@ -3152,15 +3200,13 @@ document.addEventListener('click',()=>{
     // Har safar popstate kelganda — darhol yangi state qo'shib, "chiqib ketishni" bloklaymiz
     history.pushState({app:3},'');
 
-    // Modal ochiq bo'lsa — yopamiz
-    const openMod=document.querySelector('.modal-ov.on');
-    if(openMod){
-      openMod.classList.remove('on');
+    // 1) Mini-kalendar popup yoki modal ochiq bo'lsa — eng ustkisini yopamiz
+    if(closeTopModal()){
       hideToast();
       return;
     }
 
-    // Bosh sahifada emasmi — home ga o'tamiz
+    // 2) Bosh sahifada emasmi — home ga o'tamiz
     const curId=PAGE_ORDER.find(id=>document.getElementById('p-'+id)&&document.getElementById('p-'+id).classList.contains('on'));
     if(curId && curId!=='home'){
       goP('home');
@@ -3168,7 +3214,7 @@ document.addEventListener('click',()=>{
       return;
     }
 
-    // Bosh sahifadamiz
+    // 3) Bosh sahifadamiz, hech narsa ochiq emas
     if(_exitReady){
       hideToast();
       // Chiqish — barcha state larni tozalab chiqamiz
