@@ -1332,8 +1332,8 @@ function qdQoshSaqla(){
   if(qdDBerilgan) newRecord.davoBerilgan=qdDBerilgan;
   if(qdDQanoat)   newRecord.davoKuchga=qdDQanoat;
   if(qdDRaqam)    newRecord.davoRaqam=qdDRaqam;
-  if(qdBQanoat) addKuchgaKirishAlert(fio, qdBQanoat, 'buyruq');
-  if(qdDQanoat) addKuchgaKirishAlert(fio, qdDQanoat, 'davo');
+  if(qdBQanoat) addKuchgaKirishAlert(fio, qdBQanoat, 'buyruq', yangiN);
+  if(qdDQanoat) addKuchgaKirishAlert(fio, qdDQanoat, 'davo', yangiN);
   DATA.push(newRecord);
   // localStorage ga saqlaymiz (sahifa yangilanganda ham qolsin)
   (function(){
@@ -1711,8 +1711,8 @@ function editSaqla(n){
   const msg=document.getElementById('edit-msg');
   msg.style.display='block'; msg.style.color='#86efac'; msg.textContent='✅ Saqlandi!';
   // Alert yangilash
-  if(d.buyruqKuchga) addKuchgaKirishAlert(d.fio, d.buyruqKuchga, 'buyruq');
-  if(d.davoKuchga)   addKuchgaKirishAlert(d.fio, d.davoKuchga, 'davo');
+  if(d.buyruqKuchga) addKuchgaKirishAlert(d.fio, d.buyruqKuchga, 'buyruq', n);
+  if(d.davoKuchga)   addKuchgaKirishAlert(d.fio, d.davoKuchga, 'davo', n);
   setTimeout(()=>{ closeEditModal(); openModal(n); renderList(); initHome(); renderAuksion(); renderHomeAlerts(); },1000);
 }
 
@@ -2697,19 +2697,29 @@ function natijaSaqla(id){
     proseslarSave(arr);
     // Qarzdorlar ro'yxatiga qo'shish
     const turMap={'auto':'auto','ish':'ish','mulk':'auto','boshqa':'auto'};
-    const yangiN=DATA.length+1;
-    DATA.push({
+    const yangiN=Math.max(...DATA.map(d=>d.n),0)+1;
+    const newRecord={
       n:yangiN, kod:kod, fio:fio, rayon:rayon, sum:0,
       jshr:jshr, jshr2:jshr2,
       auto:auto||'', mib:`Proses natijasi: Qanoat – ${qanoatSana.split('-').reverse().join('.')}. ${arr[idx].sud}. Sudya: ${arr[idx].sudya}`,
-      qid:'yoq', tur:turMap[garovTur]||'auto'
-    });
+      qid:'yoq', tur:turMap[garovTur]||'auto',
+      turlar:[turMap[garovTur]||'auto']
+    };
+    DATA.push(newRecord);
+    // localStorage ga saqlaymiz (sahifa yangilanganda ham qolsin)
+    (function(){
+      try{
+        const newList=JSON.parse(localStorage.getItem('sud_yangi_qarzdorlar_v1'))||[];
+        if(!newList.some(x=>x.n===newRecord.n)) newList.push(newRecord);
+        localStorage.setItem('sud_yangi_qarzdorlar_v1',JSON.stringify(newList));
+      }catch(e){}
+    })();
     // Kuchga kirish muddatini saqlash
     const kuchgaKirishStr=arr[idx].kuchgaKirishStr||'';
     arr[idx].qanoatKuchga=kuchgaKirishStr;
     proseslarSave(arr);
     // Home alertga qo'shish
-    addKuchgaKirishAlert(fio, kuchgaKirishStr, arr[idx].hujjatTuri);
+    addKuchgaKirishAlert(fio, kuchgaKirishStr, arr[idx].hujjatTuri, yangiN);
     msg.style.display='block'; msg.style.color='#86efac';
     msg.textContent='✅ Saqlandi! Qarzdor ro\'yxatga qo\'shildi (#'+yangiN+').';
     setTimeout(()=>{ natijaMClose(); renderKalendar(); if(kalSelectedDay) showDayDetail(kalSelectedDay); initHome(); renderHomeAlerts(); },1400);
@@ -2725,10 +2735,13 @@ const ALERTS_KEY='sud_kuchga_kirish_alerts_v1';
 function alertsLoad(){ try{ return JSON.parse(localStorage.getItem(ALERTS_KEY))||[]; }catch(e){ return []; } }
 function alertsSave(arr){ localStorage.setItem(ALERTS_KEY,JSON.stringify(arr)); }
 
-function addKuchgaKirishAlert(fio, sana, hujjatTuri){
+function addKuchgaKirishAlert(fio, sana, hujjatTuri, dN){
   const arr=alertsLoad();
-  arr.push({id:Date.now(), fio, sana, hujjatTuri, done:false});
-  alertsSave(arr);
+  const id = dN ? (dN * 10 + (hujjatTuri === 'buyruq' ? 1 : (hujjatTuri === 'davo' ? 2 : 3))) : Date.now();
+  if(!arr.some(a=>a.id===id)){
+    arr.push({id, fio, sana, hujjatTuri, done:false});
+    alertsSave(arr);
+  }
 }
 
 function renderHomeAlerts(){
@@ -2830,13 +2843,13 @@ updateHomeJonli();
     const doneKeys=new Set(doneAlerts.map(a=>a.fio+'|'+a.hujjatTuri));
     DATA.forEach(d=>{
       if(d.buyruqKuchga && !doneKeys.has(d.fio+'|buyruq')){
-        newAlerts.push({id:Date.now()+d.n*2, fio:d.fio, sana:d.buyruqKuchga, hujjatTuri:'buyruq', done:false});
+        newAlerts.push({id: d.n * 10 + 1, fio:d.fio, sana:d.buyruqKuchga, hujjatTuri:'buyruq', done:false});
       }
       if(d.davoKuchga && !doneKeys.has(d.fio+'|davo')){
-        newAlerts.push({id:Date.now()+d.n*2+1, fio:d.fio, sana:d.davoKuchga, hujjatTuri:'davo', done:false});
+        newAlerts.push({id: d.n * 10 + 2, fio:d.fio, sana:d.davoKuchga, hujjatTuri:'davo', done:false});
       }
       if(!d.buyruqKuchga&&!d.davoKuchga&&d.kuchgaKirishSana&&d.arizaTuri&&!doneKeys.has(d.fio+'|'+d.arizaTuri)){
-        newAlerts.push({id:Date.now()+d.n, fio:d.fio, sana:d.kuchgaKirishSana, hujjatTuri:d.arizaTuri, done:false});
+        newAlerts.push({id: d.n * 10 + 3, fio:d.fio, sana:d.kuchgaKirishSana, hujjatTuri:d.arizaTuri, done:false});
       }
     });
     alertsSave(newAlerts);

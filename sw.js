@@ -1,8 +1,17 @@
-const CACHE='sud-ijro-v65';
-const SELF_URL = self.location.pathname.replace(/sw\.js$/, 'index.html');
+const CACHE='sud-ijro-v66';
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, '');
+const ASSETS = [
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'icon-192.png',
+  BASE_PATH + 'icon-512.png'
+];
 
 self.addEventListener('install', e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.add(SELF_URL).catch(()=>{})));
+  e.waitUntil(
+    caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{}))
+  );
   self.skipWaiting();
 });
 
