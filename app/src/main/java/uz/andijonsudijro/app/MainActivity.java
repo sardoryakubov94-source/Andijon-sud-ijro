@@ -1,6 +1,7 @@
 package uz.andijonsudijro.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -262,6 +263,78 @@ public class MainActivity extends Activity {
         return p;
     }
 
+    private LinearLayout iconButton(String text, int iconRes, int color, int sp) {
+        LinearLayout b = new LinearLayout(this);
+        b.setOrientation(LinearLayout.HORIZONTAL);
+        b.setGravity(Gravity.CENTER);
+        b.setBackground(pill(color, 12));
+        b.setClickable(true);
+        android.widget.ImageView iv = new android.widget.ImageView(this);
+        iv.setImageResource(iconRes);
+        b.addView(iv, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView t = new TextView(this);
+        t.setText(text);
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(sp);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setSingleLine(true);
+        b.addView(t, lp(-2, -2, 0, dp(6), 0, 0, 0));
+        b.setOnTouchListener((v, e) -> {
+            int act = e.getAction();
+            if (act == android.view.MotionEvent.ACTION_DOWN) v.setAlpha(0.7f);
+            else if (act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL) v.setAlpha(1f);
+            return false;
+        });
+        return b;
+    }
+
+    private android.widget.ImageButton iconOnly(int iconRes, int color) {
+        android.widget.ImageButton b = new android.widget.ImageButton(this);
+        b.setImageResource(iconRes);
+        b.setBackground(pill(color, 12));
+        b.setScaleType(android.widget.ImageView.ScaleType.CENTER_INSIDE);
+        b.setPadding(dp(10), dp(10), dp(10), dp(10));
+        return b;
+    }
+
+    /** MIB holati izohi: qarzdorning asosiy "MIB / Izoh" maydoniga yoziladi va saqlanadi. */
+    private void showIzoh() {
+        if (web == null) return;
+        web.evaluateJavascript("(window.mibGetIzoh?mibGetIzoh():'')", value -> {
+            String cur = "";
+            try {
+                Object o = new org.json.JSONTokener(value == null ? "\"\"" : value).nextValue();
+                if (o instanceof String) cur = (String) o;
+            } catch (Exception ignored) { }
+            final android.widget.EditText et = new android.widget.EditText(this);
+            et.setText(cur);
+            et.setSelection(et.getText().length());
+            et.setMinLines(4);
+            et.setGravity(Gravity.TOP | Gravity.START);
+            et.setHint("MIB bo'yicha izoh (ijro raqami, holat, eslatma...)");
+            et.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+            LinearLayout wrap = new LinearLayout(this);
+            wrap.setPadding(dp(16), dp(8), dp(16), 0);
+            wrap.addView(et, new LinearLayout.LayoutParams(-1, -2));
+            AlertDialog ad = new AlertDialog.Builder(this)
+                .setTitle("MIB holati izohi")
+                .setView(wrap)
+                .setPositiveButton("Saqlash", (dd, which) -> {
+                    String t = et.getText().toString().trim();
+                    if (web != null) web.evaluateJavascript("mibSetIzoh(" + org.json.JSONObject.quote(t) + ")", null);
+                    Toast.makeText(this, "Izoh saqlandi", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Bekor qilish", null)
+                .create();
+            if (ad.getWindow() != null) ad.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            ad.show();
+            if (ad.getWindow() != null) immersive(ad.getWindow());
+            et.requestFocus();
+        });
+    }
+
     private static final String DETECT_JS =
         "(function(){var t=((document.body&&document.body.innerText)||'');"
         + "return /жшшир|jshshir/i.test(t)&&document.querySelectorAll('input').length>1;})()";
@@ -400,9 +473,10 @@ public class MainActivity extends Activity {
         dbg.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
         dock.setBackground(dbg);
 
+        // 1-qator: yopish | qarzdor va JSHSHIR (to'liq ko'rinadi) | yangilash
         LinearLayout rowA = new LinearLayout(this);
         rowA.setGravity(Gravity.CENTER_VERTICAL);
-        Button closeB = pillButton("✕", Color.rgb(51, 65, 85), 18);
+        android.widget.ImageButton closeB = iconOnly(R.drawable.ic_close, Color.rgb(51, 65, 85));
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
         TextView ttl = new TextView(this);
@@ -414,29 +488,35 @@ public class MainActivity extends Activity {
         TextView jt = new TextView(this);
         jt.setText(digits.isEmpty() ? "JSHSHIR yo'q" : digits);
         jt.setTextColor(Color.WHITE);
-        jt.setTextSize(17);
+        jt.setTextSize(18);
         jt.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
         jt.setSingleLine(true);
         info.addView(ttl);
         info.addView(jt);
-        Button copyB = pillButton("📋", Color.rgb(59, 130, 246), 18);
-        Button fillB = pillButton("✍️", Color.rgb(34, 197, 94), 18);
-        Button reloadB = pillButton("↻", Color.rgb(51, 65, 85), 18);
-        rowA.addView(closeB, lp(dp(44), dp(44), 0, 0, 0, 0, 0));
-        rowA.addView(info, lp(0, -2, 1, dp(10), 0, dp(6), 0));
-        rowA.addView(copyB, lp(dp(44), dp(44), 0, 0, 0, dp(6), 0));
-        rowA.addView(fillB, lp(dp(44), dp(44), 0, 0, 0, dp(6), 0));
-        rowA.addView(reloadB, lp(dp(44), dp(44), 0, 0, 0, 0, 0));
+        android.widget.ImageButton reloadB = iconOnly(R.drawable.ic_refresh, Color.rgb(51, 65, 85));
+        rowA.addView(closeB, lp(dp(42), dp(42), 0, 0, 0, 0, 0));
+        rowA.addView(info, lp(0, -2, 1, dp(10), 0, dp(10), 0));
+        rowA.addView(reloadB, lp(dp(42), dp(42), 0, 0, 0, 0, 0));
         dock.addView(rowA, new LinearLayout.LayoutParams(-1, -2));
 
+        // 2-qator: nusxalash | MIB maydoniga joylash
+        LinearLayout rowC = new LinearLayout(this);
+        rowC.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout copyB = iconButton("Nusxalash", R.drawable.ic_copy, Color.rgb(59, 130, 246), 13);
+        LinearLayout fillB = iconButton("Maydonga joylash", R.drawable.ic_paste, Color.rgb(14, 165, 233), 13);
+        rowC.addView(copyB, lp(0, dp(42), 1, 0, 0, dp(6), 0));
+        rowC.addView(fillB, lp(0, dp(42), 1.4f, 0, 0, 0, 0));
+        dock.addView(rowC, lp(-1, -2, 0, 0, dp(8), 0, 0));
+
+        // 3-qator: natija tugmalari + izoh
         LinearLayout rowB = new LinearLayout(this);
         rowB.setGravity(Gravity.CENTER_VERTICAL);
-        Button rOk = pillButton("✅ Qo'zg'atilgan", Color.rgb(22, 163, 74), 12);
-        Button rNo = pillButton("❌ Yo'q", Color.rgb(220, 38, 38), 12);
-        Button rCl = pillButton("🗄️ Yopilgan", Color.rgb(71, 85, 105), 12);
-        rowB.addView(rOk, lp(0, dp(46), 1.3f, 0, 0, dp(6), 0));
-        rowB.addView(rNo, lp(0, dp(46), 0.8f, 0, 0, dp(6), 0));
-        rowB.addView(rCl, lp(0, dp(46), 1f, 0, 0, 0, 0));
+        LinearLayout rOk = iconButton("Qo'zg'atilgan", R.drawable.ic_check, Color.rgb(22, 163, 74), 12);
+        LinearLayout rNo = iconButton("Yo'q", R.drawable.ic_cancel, Color.rgb(220, 38, 38), 12);
+        LinearLayout rIz = iconButton("Izoh", R.drawable.ic_edit, Color.rgb(124, 58, 237), 12);
+        rowB.addView(rOk, lp(0, dp(46), 1.5f, 0, 0, dp(6), 0));
+        rowB.addView(rNo, lp(0, dp(46), 0.9f, 0, 0, dp(6), 0));
+        rowB.addView(rIz, lp(0, dp(46), 1f, 0, 0, 0, 0));
         dock.addView(rowB, lp(-1, -2, 0, 0, dp(8), 0, 0));
         box.addView(dock, new LinearLayout.LayoutParams(-1, -2));
 
@@ -465,7 +545,7 @@ public class MainActivity extends Activity {
         fillB.setOnClickListener(v -> fillMib(mw, digits));
         rOk.setOnClickListener(v -> finishMib(dlg, "qozgatilgan"));
         rNo.setOnClickListener(v -> finishMib(dlg, "yoq"));
-        rCl.setOnClickListener(v -> finishMib(dlg, "yopilgan"));
+        rIz.setOnClickListener(v -> showIzoh());
 
         dlg.show();
         if (dlg.getWindow() != null) {

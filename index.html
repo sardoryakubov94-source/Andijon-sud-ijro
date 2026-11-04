@@ -3108,6 +3108,7 @@ function mibRenderSide(){
     </div>
     <div class="card">
       <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
+      ${d.mib?`<div class="mib-sub" style="margin-bottom:8px;white-space:pre-wrap;color:#cbd5e1"><b>📝 MIB izohi:</b> ${mibEsc(d.mib)}</div>`:''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${chips}</div>
       ${dr.holat==='qozgatilgan'?`<div id="mib-ishlar">${ishlar}</div>
         <button class="btn bg2" style="width:100%;margin-bottom:8px" onclick="mibIshAdd()">➕ Ijro ishi qo'shish</button>`:''}
@@ -3122,6 +3123,15 @@ function mibRenderSide(){
     </div>`;
 }
 
+/* Android MIB oynasidagi «Izoh» tugmasi uchun: qarzdorning asosiy «MIB / Izoh» matni */
+function mibGetIzoh(){ const d=DATA.find(x=>x.n===_mibSel); return d?(d.mib||''):''; }
+function mibSetIzoh(text){
+  const d=DATA.find(x=>x.n===_mibSel); if(!d) return false;
+  d.mib=String(text||'').trim();
+  const ext=extGet(d.n); ext.mib=d.mib; extSet(d.n,ext);
+  try{ mibRenderSide(); mibRenderList(); renderList(); }catch(e){}
+  return true;
+}
 function mibCopyNow(){
   const d=DATA.find(x=>x.n===_mibSel); if(!d) return;
   mibCopy(mibJshr(d,_mibWho));
