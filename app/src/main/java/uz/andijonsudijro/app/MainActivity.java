@@ -114,6 +114,7 @@ public class MainActivity extends Activity {
                     return false;
                 });
                 dlg.show();
+                if (dlg.getWindow() != null) dlg.getWindow().setLayout(-1, -1);
                 popup.setWebChromeClient(new WebChromeClient());
                 ((WebView.WebViewTransport) resultMsg.obj).setWebView(popup);
                 resultMsg.sendToTarget();
