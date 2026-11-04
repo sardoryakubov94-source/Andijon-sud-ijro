@@ -3099,9 +3099,10 @@ function mibRenderSide(){
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button class="btn bo" onclick="mibOpenNew()">🌐 mib.uz (yangi oyna)</button>
-        <button class="btn bp" onclick="mibOpenSame()">↗ MIBni shu oynada ochish</button>
+        <button class="btn" style="background:var(--b);color:var(--t)" onclick="mibToggleFrame()">${_mibFrame?'🙈 Oynani yopish':'🪟 Shu yerda ochish'}</button>
       </div>
-      <div class="mib-sub" style="margin-top:6px">⚠️ mib.uz xavfsizlik sabab boshqa sayt ichida (iframe) ochilishni bloklaydi. Shu oynada ochish orqali tekshiring; brauzerning «Orqaga» tugmasi dasturga qaytaradi. Qarzdor va kiritilgan MIB natijalari saqlanib qoladi.</div>
+      <div id="mib-frame-box">${_mibFrame?`<iframe class="mib-frame" src="${MIB_URL}" referrerpolicy="no-referrer" style="width:100%;height:65vh;min-height:420px;border:0;border-radius:8px;background:#fff"></iframe>
+        <div class="mib-sub" style="margin-top:4px">Agar MIB sayti ichki oynada ochilmasa, «MIBni shu oynada ochish» tugmasidan foydalaning.</div>`:''}</div>
     </div>
     <div class="card">
       <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
@@ -3126,6 +3127,7 @@ function mibCopyNow(){
 }
 function mibOpenNew(){ window.open(MIB_URL,'_blank','noopener'); }
 function mibOpenSame(){ window.location.href=MIB_URL; }
+function mibToggleFrame(){ _mibFrame=!_mibFrame; mibRenderSide(); }
 function mibSetHolat(v){
   _mibDraft.holat=v;
   if(v==='qozgatilgan' && !(_mibDraft.ishlar||[]).length) _mibDraft.ishlar=[{raqam:'',ijrochi:'',sana:'',summa:'',izoh:''}];
