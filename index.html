@@ -3098,11 +3098,9 @@ function mibRenderSide(){
         ${j?`<button class="btn bp" id="mib-copy-btn" onclick="mibCopyNow()">📋 Nusxalash</button>`:'<span class="mib-sub">Bu javobgar uchun JSHSHIR kiritilmagan</span>'}
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn bo" onclick="mibOpenNew()">🌐 mib.uz (yangi oyna)</button>
-        <button class="btn" style="background:var(--b);color:var(--t)" onclick="mibToggleFrame()">${_mibFrame?'🙈 Oynani yopish':'🪟 Shu yerda ochish'}</button>
+        <button class="btn bp" style="width:100%" onclick="mibOpenNew()">🪟 MIBni shu dastur ichida ochish</button>
       </div>
-      <div id="mib-frame-box">${_mibFrame?`<iframe class="mib-frame" src="${MIB_URL}" referrerpolicy="no-referrer" style="width:100%;height:65vh;min-height:420px;border:0;border-radius:8px;background:#fff"></iframe>
-        <div class="mib-sub" style="margin-top:4px">Agar MIB sayti ichki oynada ochilmasa, «MIBni shu oynada ochish» tugmasidan foydalaning.</div>`:''}</div>
+      <div class="mib-sub" style="margin-top:6px">MIB alohida ichki brauzer oynasida ochiladi. JSHSHIRni nusxalab, MIBda tekshiring; oynani yopib shu qarzdor kartasiga qayting.</div>
     </div>
     <div class="card">
       <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
