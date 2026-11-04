@@ -20,6 +20,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -39,6 +40,8 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private Dialog mibDialog;
+    private ValueCallback<Uri[]> fileCb;
+    private static final int REQ_FILE = 7701;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -66,7 +69,7 @@ public class MainActivity extends Activity {
         s.setLoadsImagesAutomatically(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         s.setAllowFileAccess(false);
-        s.setAllowContentAccess(false);
+        s.setAllowContentAccess(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
         web.addJavascriptInterface(new Bridge(), "AndroidMib");
@@ -96,6 +99,21 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage message) {
                 android.util.Log.e("SudIjroWeb", message.message() + " -- " + message.sourceId() + ":" + message.lineNumber());
+                return true;
+            }
+            // Import: fayl tanlash oynasi
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
+                if (fileCb != null) { fileCb.onReceiveValue(null); fileCb = null; }
+                fileCb = cb;
+                try {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(Intent.createChooser(i, "Faylni tanlang"), REQ_FILE);
+                } catch (Exception e) {
+                    fileCb.onReceiveValue(null); fileCb = null;
+                    return false;
+                }
                 return true;
             }
         });
@@ -163,6 +181,49 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void copy(final String text) {
             runOnUiThread(() -> { if (trustedPage()) copyText(text); });
         }
+        @JavascriptInterface public void saveFile(final String name, final String content) {
+            runOnUiThread(() -> { if (trustedPage()) saveToDownloads(name, content); });
+        }
+    }
+
+    /** Eksport faylini telefonning Yuklanmalar (Downloads) papkasiga saqlaydi. */
+    private void saveToDownloads(String name, String content) {
+        try {
+            byte[] bytes = (content == null ? "" : content).getBytes("UTF-8");
+            String safe = (name == null || name.isEmpty() ? "sud-ijro.json" : name).replaceAll("[^A-Za-z0-9._-]", "_");
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues cv = new android.content.ContentValues();
+                cv.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, safe);
+                cv.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                cv.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS);
+                Uri uri = getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
+                if (uri == null) throw new java.io.IOException("Fayl yaratilmadi");
+                java.io.OutputStream os = getContentResolver().openOutputStream(uri);
+                if (os == null) throw new java.io.IOException("Fayl ochilmadi");
+                try { os.write(bytes); } finally { os.close(); }
+                Toast.makeText(this, "✅ Saqlandi: Yuklanmalar (Downloads) papkasi\n" + safe, Toast.LENGTH_LONG).show();
+            } else {
+                java.io.File dir = getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS);
+                if (dir == null) throw new java.io.IOException("Papka topilmadi");
+                if (!dir.exists()) dir.mkdirs();
+                java.io.File f = new java.io.File(dir, safe);
+                java.io.FileOutputStream fo = new java.io.FileOutputStream(f);
+                try { fo.write(bytes); } finally { fo.close(); }
+                Toast.makeText(this, "✅ Saqlandi: " + f.getAbsolutePath(), Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Saqlab bo'lmadi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int req, int res, Intent data) {
+        if (req == REQ_FILE) {
+            Uri[] r = null;
+            if (res == RESULT_OK && data != null) r = WebChromeClient.FileChooserParams.parseResult(res, data);
+            if (fileCb != null) { fileCb.onReceiveValue(r); fileCb = null; }
+            return;
+        }
+        super.onActivityResult(req, res, data);
     }
 
     private void copyText(String text) {

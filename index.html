@@ -3690,17 +3690,22 @@ function exportData(){
       exportedBy:'Sud Ijro Nazorat',
       data:data
     },null,2);
-    const blob=new Blob([json],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
     const now=new Date();
     const dateStr=now.toISOString().slice(0,10);
-    a.href=url;
-    a.download='sud-ijro-'+dateStr+'.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if(window.AndroidMib && typeof window.AndroidMib.saveFile==='function'){
+      // Android ilova: fayl to'g'ridan-to'g'ri telefonning Yuklanmalar (Downloads) papkasiga saqlanadi
+      window.AndroidMib.saveFile('sud-ijro-'+dateStr+'.json',json);
+    } else {
+      const blob=new Blob([json],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='sud-ijro-'+dateStr+'.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
     // Nazorat uchun: eksportlangan faylda haqiqatan nechta qarzdor karta borligini hisoblaymiz
     let qarzSoni=DATA.length;
     try{
