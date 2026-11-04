@@ -1861,6 +1861,7 @@ function goP(id){
   if(id==='kalendar') renderKalendar();
   if(id==='vazifalar') renderVazifalar();
   if(id==='mib') mibInit();
+  mibFixWrap();
 }
 
 /* Yuqoridagi global qidiruv paneli: Qarzdorlar bo'limiga o'tib qidiradi */
@@ -2951,6 +2952,10 @@ renderHomeShvz();
 
 
 /* ===================== MIB TEKSHIRUV ===================== */
+
+/* sahifalar o'rami yon tomonga siljib ketmasin (sahifalar aralashib qolishining oldini oladi) */
+function mibFixWrap(){ const pw=document.querySelector('.pages-wrap'); if(pw && pw.scrollLeft) pw.scrollLeft=0; }
+(function(){ const pw=document.querySelector('.pages-wrap'); if(pw) pw.addEventListener('scroll',function(){ if(pw.scrollLeft) pw.scrollLeft=0; },{passive:true}); })();
 const MIB_KEY='sud_mib_tekshiruv_v1';
 const MIB_URL='https://mib.uz';
 const MIB_HOLAT=[
@@ -3037,7 +3042,7 @@ function mibQuick(n,who,btn){
   mibSelect(n,who,true);
   if(btn){ btn.classList.add('ok'); setTimeout(()=>btn.classList.remove('ok'),1200); }
 }
-function mibOpenFor(n){ goP('mib'); setTimeout(()=>mibSelect(n,'a',true),50); }
+function mibOpenFor(n){ goP('mib'); setTimeout(()=>{ mibFixWrap(); mibSelect(n,'a',true); },350); }
 
 function mibSelect(n,who,copy){
   _mibSel=n; _mibWho=who;
@@ -3046,7 +3051,8 @@ function mibSelect(n,who,copy){
   _mibDraft=r?JSON.parse(JSON.stringify(r)):{holat:'',ishlar:[],izoh:'',sana:''};
   if(copy && mibJshr(d,who)) mibCopy(mibJshr(d,who));
   mibRenderList(); mibRenderSide();
-  if(window.innerWidth<900){ const sd=document.getElementById('mib-side'); if(sd) sd.scrollIntoView({behavior:'smooth',block:'start'}); }
+  if(window.innerWidth<900){ const sd=document.getElementById('mib-side'); if(sd){ const y=sd.getBoundingClientRect().top+window.pageYOffset-110; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); } }
+  mibFixWrap();
 }
 
 function mibRenderSide(){
