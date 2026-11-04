@@ -3123,7 +3123,7 @@ function mibCopyNow(){
   mibCopy(mibJshr(d,_mibWho));
   const b=document.getElementById('mib-copy-btn'); if(b){ b.textContent='✓ Nusxalandi'; setTimeout(()=>{ b.textContent='📋 Nusxalash'; },1400); }
 }
-function mibOpenNew(){ window.open(MIB_URL,'_blank','noopener'); }
+function mibOpenNew(){ if(/Android.*; wv\\)/i.test(navigator.userAgent)){ window.location.href=MIB_URL; } else { window.open(MIB_URL,'_blank','noopener'); } }
 function mibOpenSame(){ window.location.href=MIB_URL; }
 function mibToggleFrame(){ _mibFrame=!_mibFrame; mibRenderSide(); }
 function mibSetHolat(v){
