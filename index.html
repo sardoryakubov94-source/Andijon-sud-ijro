@@ -3097,10 +3097,9 @@ function mibRenderSide(){
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button class="btn bo" onclick="mibOpenNew()">🌐 mib.uz (yangi oyna)</button>
-        <button class="btn" style="background:var(--b);color:var(--t)" onclick="mibToggleFrame()">${_mibFrame?'🙈 Oynani yopish':'🪟 Shu yerda ochish'}</button>
+        <button class="btn bp" onclick="mibOpenSame()">↗ MIBni shu oynada ochish</button>
       </div>
-      <div id="mib-frame-box">${_mibFrame?`<iframe class="mib-frame" src="${MIB_URL}" referrerpolicy="no-referrer"></iframe>
-        <div class="mib-sub" style="margin-top:4px">Agar oyna bo'sh chiqsa, sayt ichiga joylashga ruxsat bermaydi, «🌐 yangi oyna» tugmasidan foydalaning.</div>`:''}</div>
+      <div class="mib-sub" style="margin-top:6px">⚠️ mib.uz xavfsizlik sabab boshqa sayt ichida (iframe) ochilishni bloklaydi. Shu oynada ochish orqali tekshiring; brauzerning «Orqaga» tugmasi dasturga qaytaradi. Qarzdor va kiritilgan MIB natijalari saqlanib qoladi.</div>
     </div>
     <div class="card">
       <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
@@ -3124,7 +3123,7 @@ function mibCopyNow(){
   const b=document.getElementById('mib-copy-btn'); if(b){ b.textContent='✓ Nusxalandi'; setTimeout(()=>{ b.textContent='📋 Nusxalash'; },1400); }
 }
 function mibOpenNew(){ window.open(MIB_URL,'_blank','noopener'); }
-function mibToggleFrame(){ _mibFrame=!_mibFrame; mibRenderSide(); }
+function mibOpenSame(){ window.location.href=MIB_URL; }
 function mibSetHolat(v){
   _mibDraft.holat=v;
   if(v==='qozgatilgan' && !(_mibDraft.ishlar||[]).length) _mibDraft.ishlar=[{raqam:'',ijrochi:'',sana:'',summa:'',izoh:''}];
