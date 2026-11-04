@@ -3039,20 +3039,24 @@ function mibRenderList(){
 }
 
 /* qatordagi JSHSHIR tugmasi: tanlash + nusxalash */
-function mibFastCheck(n){ const d=DATA.find(x=>x.n===n); if(!d) return; mibCopy(d.jshr||''); window.open(MIB_URL,'_blank','noopener'); }
+function mibFastCheck(n){ if(!DATA.find(x=>x.n===n)) return; mibPrepare(n,'a'); mibOpenNew(); }
 function mibQuick(n,who,btn){
   mibSelect(n,who,true);
+  if(mibNative()) mibOpenNew();
   if(btn){ btn.classList.add('ok'); setTimeout(()=>btn.classList.remove('ok'),1200); }
 }
 function mibOpenFor(n){ goP('mib'); setTimeout(()=>{ mibFixWrap(); mibSelect(n,'a',true); },350); }
 
-function mibSelect(n,who,copy){
+function mibPrepare(n,who){
   _mibSel=n; _mibWho=who;
-  const d=DATA.find(x=>x.n===n); if(!d) return;
   const r=mibRec(n,who);
   _mibDraft=r?JSON.parse(JSON.stringify(r)):{holat:'',ishlar:[],izoh:'',sana:''};
-  if(copy && mibJshr(d,who)) mibCopy(mibJshr(d,who));
   mibRenderList(); mibRenderSide();
+}
+function mibSelect(n,who,copy){
+  const d=DATA.find(x=>x.n===n); if(!d) return;
+  mibPrepare(n,who);
+  if(copy && mibJshr(d,who)) mibCopy(mibJshr(d,who));
   if(window.innerWidth<900){ const sd=document.getElementById('mib-side'); if(sd){ const y=sd.getBoundingClientRect().top+window.pageYOffset-110; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); } }
   mibFixWrap();
 }
@@ -3098,9 +3102,9 @@ function mibRenderSide(){
         ${j?`<button class="btn bp" id="mib-copy-btn" onclick="mibCopyNow()">📋 Nusxalash</button>`:'<span class="mib-sub">Bu javobgar uchun JSHSHIR kiritilmagan</span>'}
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn bp" style="width:100%" onclick="mibOpenNew()">🪟 MIBni shu dastur ichida ochish</button>
+        <button class="btn bp" style="width:100%" onclick="mibOpenNew()">🏛️ MIB saytini ochish (JSHSHIR nusxalanadi)</button>
       </div>
-      <div class="mib-sub" style="margin-top:6px">MIB alohida ichki brauzer oynasida ochiladi. JSHSHIRni nusxalab, MIBda tekshiring; oynani yopib shu qarzdor kartasiga qayting.</div>
+      <div class="mib-sub" style="margin-top:6px">MIB dastur ichidagi oynada ochiladi. Pastdagi «✅ / ❌ / 🗄️» tugmalari natijani shu qarzdorga biriktirish formasiga o'tkazadi.</div>
     </div>
     <div class="card">
       <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
@@ -3123,8 +3127,26 @@ function mibCopyNow(){
   mibCopy(mibJshr(d,_mibWho));
   const b=document.getElementById('mib-copy-btn'); if(b){ b.textContent='✓ Nusxalandi'; setTimeout(()=>{ b.textContent='📋 Nusxalash'; },1400); }
 }
-function mibOpenNew(){ if(/Android.*; wv\)/i.test(navigator.userAgent)){ window.location.href=MIB_URL; } else { window.open(MIB_URL,'_blank','noopener'); } }
-function mibOpenSame(){ window.location.href=MIB_URL; }
+/* MIB ni ochish: Android ilovada ichki oynada (ilova joyida qoladi), brauzerda yangi tabda */
+function mibNative(){ return typeof window.AndroidMib!=='undefined' && window.AndroidMib && typeof window.AndroidMib.openMib==='function'; }
+function mibOpenNew(){
+  const d=DATA.find(x=>x.n===_mibSel);
+  const j=d?mibJshr(d,_mibWho):'';
+  if(j) mibCopy(j);
+  if(mibNative()){ window.AndroidMib.openMib(MIB_URL,j||'',d?(d.fio+(_mibWho==='q'?" (qo'sh.)":'')):'MIB'); }
+  else { window.open(MIB_URL,'_blank','noopener'); }
+}
+/* MIB oynasi yopilganda (yoki natija tugmasi bosilganda) ilovaga qaytish */
+function mibAfterClose(h){
+  if(!document.getElementById('p-mib').classList.contains('on')) goP('mib');
+  setTimeout(function(){
+    mibFixWrap();
+    if(_mibSel && h) mibSetHolat(h);
+    else { mibRenderList(); mibRenderSide(); }
+    const sd=document.getElementById('mib-side');
+    if(sd && window.innerWidth<900){ const y=sd.getBoundingClientRect().top+window.pageYOffset-110; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
+  },320);
+}
 function mibToggleFrame(){ _mibFrame=!_mibFrame; mibRenderSide(); }
 function mibSetHolat(v){
   _mibDraft.holat=v;
