@@ -950,6 +950,7 @@ function card(d,click=true,extraStyle='',aukMode=false,displayNum=null){
         </div>
         ${d.auto&&d.auto!=='ish haqi'&&d.auto!=='Ish haqi'&&d.auto!=='ish хаqqи'?`<div style="font-size:11px;color:#7dd3fc;margin-top:3px">🚗 ${d.auto}</div>`:''}
         <div class="mib-txt">${d.mib.substring(0,120)}${d.mib.length>120?'...':''}</div>${mibBadgeLine(d.n)}
+        <button class="btn bp" style="padding:4px 8px;font-size:10px;margin-top:5px" onclick="event.stopPropagation();mibFastCheck(${d.n})">🏛️ MIB tekshir · JSHIR nusxalash</button>
       </div>
       <button onclick="event.stopPropagation();${delFn}" style="background:none;border:1px solid #7f1d1d;color:#fca5a5;border-radius:5px;padding:4px 7px;font-size:13px;cursor:pointer;flex-shrink:0;margin-top:2px" title="${delTitle}">🗑</button>
     </div>
@@ -3038,6 +3039,7 @@ function mibRenderList(){
 }
 
 /* qatordagi JSHSHIR tugmasi: tanlash + nusxalash */
+function mibFastCheck(n){ const d=DATA.find(x=>x.n===n); if(!d) return; mibCopy(d.jshr||''); window.open(MIB_URL,'_blank','noopener'); }
 function mibQuick(n,who,btn){
   mibSelect(n,who,true);
   if(btn){ btn.classList.add('ok'); setTimeout(()=>btn.classList.remove('ok'),1200); }
