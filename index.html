@@ -1297,7 +1297,7 @@ function qdTurChange(el){
   const cbs=document.querySelectorAll('.qd-tur-cb:checked');
   const lbl=document.getElementById('qd-tur-label');
   if(lbl){
-    const vals=Array.from(cbs).map(c=>TURLAR.find(t=>t.v===c.value)?.l||c.value);
+    const vals=Array.from(cbs).map(c=>((TURLAR.find(t=>t.v===c.value)||{}).l)||c.value);
     lbl.textContent=vals.length?vals.join(', '):'— Tanlang —';
   }
 }
@@ -1314,8 +1314,8 @@ function efTurChange(el,n){
   }
   // Label yangilash
   const cbs=document.querySelectorAll('.ef-tur-cb:checked');
-  const vals=Array.from(cbs).map(c=>TURLAR.find(t=>t.v===c.value)?.l||c.value);
-  const lbl=el.closest('div').previousElementSibling?.querySelector('span');
+  const vals=Array.from(cbs).map(c=>((TURLAR.find(t=>t.v===c.value)||{}).l)||c.value);
+  const lbl=(el.closest('div').previousElementSibling ? el.closest('div').previousElementSibling.querySelector('span') : null);
   if(lbl) lbl.textContent=vals.length?vals.join(', '):'— Tanlang —';
 }
 function qdMibHisob(){
@@ -1581,7 +1581,7 @@ function openEditModal(n){
       </select>
       <label style="font-size:10px;color:var(--m);margin-top:5px">🏷️ Tur</label>
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'grid':'none';this.querySelector('.ef-arr').textContent=this.nextElementSibling.style.display==='none'?'▼':'▲'" style="background:var(--bg);border:1px solid var(--b);border-radius:6px;padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--t)">
-        <span>${(d.turlar||[d.tur]).map(t=>TURLAR.find(x=>x.v===t)?.l||t).join(', ')}</span>
+        <span>${(d.turlar||[d.tur]).map(t=>((TURLAR.find(x=>x.v===t)||{}).l)||t).join(', ')}</span>
         <span class="ef-arr">▼</span>
       </div>
       <div style="display:none;grid-template-columns:1fr 1fr;gap:4px;margin-top:2px">
