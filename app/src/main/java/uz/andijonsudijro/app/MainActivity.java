@@ -62,13 +62,23 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
-        s.setSupportMultipleWindows(true);
+        s.setSupportMultipleWindows(false);
         s.setLoadsImagesAutomatically(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
+
+        web.setFocusable(true);
+        web.setFocusableInTouchMode(true);
+        web.setClickable(true);
+        web.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                v.getParent().requestDisallowInterceptTouchEvent(true);
+            }
+            return false;
+        });
 
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -85,6 +95,10 @@ public class MainActivity extends Activity {
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage message) {
+                android.util.Log.e("SudIjroWeb", message.message() + " -- " + message.sourceId() + ":" + message.lineNumber());
+                return true;
+            }
             @Override public void onProgressChanged(WebView view, int value) {
                 progress.setProgress(value);
                 progress.setVisibility(value >= 100 ? View.GONE : View.VISIBLE);
@@ -125,6 +139,7 @@ public class MainActivity extends Activity {
         home.setOnClickListener(v -> web.loadUrl(HOME));
         reload.setOnClickListener(v -> web.reload());
         if (state == null) web.loadUrl(HOME); else web.restoreState(state);
+        web.setInitialScale(0);
     }
 
     private Button button(String text) {
