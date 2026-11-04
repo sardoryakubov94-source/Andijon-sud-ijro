@@ -263,6 +263,23 @@ public class MainActivity extends Activity {
         return p;
     }
 
+    private Button zoomButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setTextColor(Color.WHITE);
+        b.setTextSize(22);
+        b.setTypeface(Typeface.DEFAULT_BOLD);
+        b.setAllCaps(false);
+        b.setPadding(0, 0, 0, 0);
+        b.setBackground(pill(Color.argb(205, 15, 23, 42), 20));
+        b.setStateListAnimator(null);
+        b.setMinHeight(0);
+        b.setMinimumHeight(0);
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        return b;
+    }
+
     private LinearLayout iconButton(String text, int iconRes, int color, int sp) {
         LinearLayout b = new LinearLayout(this);
         b.setOrientation(LinearLayout.HORIZONTAL);
@@ -334,6 +351,16 @@ public class MainActivity extends Activity {
             et.requestFocus();
         });
     }
+
+    /** Sayt masshtabni cheklagan bo'lsa (user-scalable=no), uni ochib qo'yadi: barmoq bilan kattalashtirish mumkin. */
+    private static final String ZOOM_JS =
+        "(function(){var m=document.querySelector('meta[name=viewport]');if(!m)return;"
+        + "var c=m.getAttribute('content')||'width=device-width, initial-scale=1';"
+        + "c=c.replace(/user-scalable[ ]*=[ ]*(no|0)/ig,'user-scalable=yes')"
+        + ".replace(/maximum-scale[ ]*=[ ]*[0-9.]+/ig,'maximum-scale=5')"
+        + ".replace(/minimum-scale[ ]*=[ ]*[0-9.]+/ig,'minimum-scale=0.5');"
+        + "if(!/user-scalable/i.test(c))c+=', user-scalable=yes';"
+        + "m.setAttribute('content',c);})()";
 
     private static final String DETECT_JS =
         "(function(){var t=((document.body&&document.body.innerText)||'');"
@@ -434,6 +461,7 @@ public class MainActivity extends Activity {
         ms.setAllowContentAccess(false);
         ms.setUseWideViewPort(true);
         ms.setLoadWithOverviewMode(true);
+        ms.setSupportZoom(true);
         ms.setBuiltInZoomControls(true);
         ms.setDisplayZoomControls(false);
         CookieManager.getInstance().setAcceptCookie(true);
@@ -452,6 +480,7 @@ public class MainActivity extends Activity {
                         } catch (Exception ignored) { }
                     }
                 });
+                view.evaluateJavascript(ZOOM_JS, null);
                 if (!digits.isEmpty()) view.evaluateJavascript(autoScript(digits), null);
             }
         });
@@ -461,7 +490,20 @@ public class MainActivity extends Activity {
                 pb.setVisibility(value >= 100 ? View.GONE : View.VISIBLE);
             }
         });
-        box.addView(mw, new LinearLayout.LayoutParams(-1, 0, 1));
+        android.widget.FrameLayout wf = new android.widget.FrameLayout(this);
+        wf.addView(mw, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        LinearLayout zoom = new LinearLayout(this);
+        zoom.setOrientation(LinearLayout.VERTICAL);
+        Button zin = zoomButton("+");
+        Button zout = zoomButton("−");
+        zoom.addView(zin, lp(dp(40), dp(40), 0, 0, 0, 0, dp(8)));
+        zoom.addView(zout, lp(dp(40), dp(40), 0, 0, 0, 0, 0));
+        android.widget.FrameLayout.LayoutParams zp = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.END | Gravity.BOTTOM);
+        zp.setMargins(0, 0, dp(10), dp(14));
+        wf.addView(zoom, zp);
+        zin.setOnClickListener(v -> { if (!mw.zoomIn()) ms.setTextZoom(Math.min(300, ms.getTextZoom() + 20)); });
+        zout.setOnClickListener(v -> { if (!mw.zoomOut()) ms.setTextZoom(Math.max(50, ms.getTextZoom() - 20)); });
+        box.addView(wf, new LinearLayout.LayoutParams(-1, 0, 1));
 
         // Pastki panel (faqat pastda): JSHSHIR + amallar + natija tugmalari
         LinearLayout dock = new LinearLayout(this);
@@ -511,8 +553,8 @@ public class MainActivity extends Activity {
         // 3-qator: natija tugmalari + izoh
         LinearLayout rowB = new LinearLayout(this);
         rowB.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout rOk = iconButton("Qo'zg'atilgan", R.drawable.ic_check, Color.rgb(22, 163, 74), 12);
-        LinearLayout rNo = iconButton("Yo'q", R.drawable.ic_cancel, Color.rgb(220, 38, 38), 12);
+        LinearLayout rOk = iconButton("MIBda bor", R.drawable.ic_check, Color.rgb(22, 163, 74), 12);
+        LinearLayout rNo = iconButton("MIBda yo'q", R.drawable.ic_cancel, Color.rgb(220, 38, 38), 12);
         LinearLayout rIz = iconButton("Izoh", R.drawable.ic_edit, Color.rgb(124, 58, 237), 12);
         rowB.addView(rOk, lp(0, dp(46), 1.5f, 0, 0, dp(6), 0));
         rowB.addView(rNo, lp(0, dp(46), 0.9f, 0, 0, dp(6), 0));

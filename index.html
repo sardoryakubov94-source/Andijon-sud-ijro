@@ -3065,15 +3065,17 @@ function mibRenderSide(){
   const box=document.getElementById('mib-side');
   const d=DATA.find(x=>x.n===_mibSel);
   if(!d){
-    box.innerHTML=`<div class="card"><div class="ctit">MIB</div>
-      <div style="font-size:12px;color:var(--m);line-height:1.5">Ro'yxatdan qarzdorni tanlang yoki uning <b>JSHSHIR</b> tugmasini bosing: raqam avtomatik nusxalanadi.<br>Keyin MIB saytida «Qarzdorlikni tekshirish» maydoniga qo'ying (Ctrl+V) va natijani shu yerga kiriting.</div>
-      <button class="btn bp" style="width:100%;margin-top:10px" onclick="window.open('${MIB_URL}','_blank')">🌐 mib.uz ni ochish</button></div>`;
+    box.innerHTML=`<div class="card" style="padding:10px 12px"><div style="font-size:12px;color:var(--m)">Qarzdorni tanlang: JSHSHIR nusxalanadi va MIB ochiladi.</div>
+      <button class="btn bp" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="mibOpenNew()">🏛️ MIB</button></div>`;
     return;
   }
   const two=d.jshr2&&d.jshr2!==d.jshr;
   const j=mibJshr(d,_mibWho);
   const dr=_mibDraft;
-  const chips=MIB_HOLAT.map(h=>`<button class="mib-chip${dr.holat===h.v?' on':''}" style="${dr.holat===h.v?`background:${h.c};border-color:${h.c}`:''}" onclick="mibSetHolat('${h.v}')">${h.l}</button>`).join('');
+  /* faqat ikkita asosiy natija; boshqa (eski) holat bo'lsa, o'sha ham ko'rinadi */
+  const shown=MIB_HOLAT.filter(h=>h.v==='qozgatilgan'||h.v==='yoq'||h.v===dr.holat);
+  const lbl={qozgatilgan:'✅ MIBda bor',yoq:"❌ MIBda yo'q"};
+  const chips=shown.map(h=>`<button class="mib-chip${dr.holat===h.v?' on':''}" style="flex:1;padding:7px 6px;${dr.holat===h.v?`background:${h.c};border-color:${h.c}`:''}" onclick="mibSetHolat('${h.v}')">${lbl[h.v]||h.l}</button>`).join('');
   const ishlar=(dr.ishlar||[]).map((x,i)=>`
     <div class="mib-ish">
       <div class="mib-grid">
@@ -3084,42 +3086,37 @@ function mibRenderSide(){
       </div>
       <div style="display:flex;gap:6px;margin-top:5px">
         <input class="sinp" style="margin-bottom:0" placeholder="Izoh (undiruvchi, hujjat turi...)" value="${mibEsc(x.izoh)}" oninput="mibIshSet(${i},'izoh',this.value)">
-        <button class="btn" style="background:none;border:1px solid #7f1d1d;color:#fca5a5" onclick="mibIshDel(${i})">🗑</button>
+        <button class="btn" style="background:none;border:1px solid #7f1d1d;color:#fca5a5;padding:4px 9px" onclick="mibIshDel(${i})">🗑</button>
       </div>
     </div>`).join('');
+  const sm='padding:6px 11px;font-size:12px';
   box.innerHTML=`
-    <div class="card" style="border-color:var(--a)">
+    <div class="card" style="border-color:var(--a);padding:10px 12px">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-        <div><div class="mib-fio" style="font-size:15px">${mibEsc(d.fio)}</div>
+        <div style="min-width:0"><div class="mib-fio" style="font-size:14px">${mibEsc(d.fio)}</div>
         <div class="mib-sub">📋 ${mibEsc(d.kod)} · 📍 ${mibEsc(d.rayon)}</div></div>
-        <button class="btn" style="background:none;border:1px solid var(--b);color:var(--m)" onclick="_mibSel=null;mibRenderList();mibRenderSide()">✕</button>
+        <button class="btn" style="background:none;border:1px solid var(--b);color:var(--m);padding:3px 9px;font-size:12px" onclick="_mibSel=null;mibRenderList();mibRenderSide()">✕</button>
       </div>
-      ${two?`<div style="display:flex;gap:6px;margin-top:8px">
-        <button class="fchip${_mibWho==='a'?' on':''}" onclick="mibSelect(${d.n},'a',true)">👤 Asosiy javobgar</button>
-        <button class="fchip${_mibWho==='q'?' on':''}" onclick="mibSelect(${d.n},'q',true)">👥 Qo'shimcha javobgar</button></div>`:''}
-      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span class="mib-big">${j?mibEsc(j):'—'}</span>
-        ${j?`<button class="btn bp" id="mib-copy-btn" onclick="mibCopyNow()">📋 Nusxalash</button>`:'<span class="mib-sub">Bu javobgar uchun JSHSHIR kiritilmagan</span>'}
+      ${two?`<div style="display:flex;gap:6px;margin-top:7px">
+        <button class="fchip${_mibWho==='a'?' on':''}" onclick="mibSelect(${d.n},'a',true)">👤 Asosiy</button>
+        <button class="fchip${_mibWho==='q'?' on':''}" onclick="mibSelect(${d.n},'q',true)">👥 Qo'shimcha</button></div>`:''}
+      <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span class="mib-big" style="font-size:17px">${j?mibEsc(j):'—'}</span>
+        ${j?`<button class="btn bp" id="mib-copy-btn" style="${sm}" onclick="mibCopyNow()">📋 Nusxa</button>
+        <button class="btn bp" style="${sm}" onclick="mibOpenNew()">🏛️ MIB</button>`:'<span class="mib-sub">JSHSHIR kiritilmagan</span>'}
       </div>
-      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn bp" style="width:100%" onclick="mibOpenNew()">🏛️ MIB saytini ochish (JSHSHIR nusxalanadi)</button>
-      </div>
-      <div class="mib-sub" style="margin-top:6px">MIB dastur ichida ochiladi: JSHSHIR avtomatik joylanadi, siz faqat savoldagi kodni (1 ta raqam) kiritib «Qidirish» bosasiz. Pastdagi «✅ / ❌ / 🗄️» tugmalari natijani shu qarzdorga biriktirish formasiga o'tkazadi.</div>
-    </div>
-    <div class="card">
-      <div class="ctit">MIB natijasi${two?(_mibWho==='q'?" · qo'shimcha javobgar":' · asosiy javobgar'):''}</div>
-      ${d.mib?`<div class="mib-sub" style="margin-bottom:8px;white-space:pre-wrap;color:#cbd5e1"><b>📝 MIB izohi:</b> ${mibEsc(d.mib)}</div>`:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${chips}</div>
+      <div style="border-top:1px solid var(--b);margin:10px 0 8px"></div>
+      ${d.mib?`<div class="mib-sub" style="margin-bottom:7px;white-space:pre-wrap;color:#cbd5e1"><b>📝 MIB izohi:</b> ${mibEsc(d.mib)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-bottom:8px">${chips}</div>
       ${dr.holat==='qozgatilgan'?`<div id="mib-ishlar">${ishlar}</div>
-        <button class="btn bg2" style="width:100%;margin-bottom:8px" onclick="mibIshAdd()">➕ Ijro ishi qo'shish</button>`:''}
-      <textarea class="sinp" style="min-height:60px;resize:vertical" placeholder="Izoh (ixtiyoriy)" oninput="_mibDraft.izoh=this.value">${mibEsc(dr.izoh)}</textarea>
-      <label style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--m);margin-bottom:8px"><input type="checkbox" id="mib-append" style="accent-color:var(--a)"> Asosiy «MIB / Izoh» matniga ham qo'shib yozish</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <button class="btn bg2" onclick="mibSave(false)" style="padding:11px">💾 Saqlash</button>
-        <button class="btn bp" onclick="mibSave(true)" style="padding:11px">💾 Saqlash ▶ Keyingisi</button>
+        <button class="btn bg2" style="width:100%;margin-bottom:8px;${sm}" onclick="mibIshAdd()">➕ Ijro ishi qo'shish</button>`:''}
+      <textarea class="sinp" rows="1" style="min-height:38px;resize:vertical;margin-bottom:6px" placeholder="Izoh (ixtiyoriy)" oninput="_mibDraft.izoh=this.value">${mibEsc(dr.izoh)}</textarea>
+      <label style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--m);margin-bottom:8px"><input type="checkbox" id="mib-append" style="accent-color:var(--a)"> Asosiy «MIB / Izoh» matniga ham yozish</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="mib-msg" style="font-size:11px;flex:1;min-height:14px"></div>
+        ${mibRec(d.n,_mibWho)?`<button class="btn" style="background:none;border:1px solid #7f1d1d;color:#fca5a5;${sm}" onclick="mibClear()" title="Tekshiruvni o'chirish">🗑</button>`:''}
+        <button class="btn bg2" style="padding:7px 20px;font-size:13px" onclick="mibSave(false)">💾 Saqlash</button>
       </div>
-      <div id="mib-msg" style="font-size:11px;margin-top:6px;min-height:14px"></div>
-      ${mibRec(d.n,_mibWho)?`<button class="btn" style="background:none;border:1px solid #7f1d1d;color:#fca5a5;margin-top:6px;width:100%" onclick="mibClear()">🗑 Bu tekshiruvni o'chirish</button>`:''}
     </div>`;
 }
 
@@ -3194,6 +3191,7 @@ function mibSave(goNext){
   }
   _mibDraft=JSON.parse(JSON.stringify(rec));
   mibRenderList(); mibRenderSide();
+  const m2=document.getElementById('mib-msg'); if(m2){ m2.style.color='#86efac'; m2.textContent='✅ Saqlandi'; }
   try{ initHome(); renderList(); }catch(e){}
 }
 function mibClear(){
