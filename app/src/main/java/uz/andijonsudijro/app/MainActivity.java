@@ -362,6 +362,24 @@ public class MainActivity extends Activity {
         + "if(!/user-scalable/i.test(c))c+=', user-scalable=yes';"
         + "m.setAttribute('content',c);})()";
 
+    /** Saytning o'z «tepaga ko'tarish» (scroll-to-top) tugmasini yashiradi: u zoom tugmalari bilan ustma-ust tushadi. */
+    private static final String HIDE_TOP_JS =
+        "(function(){if(window.__mibNoTop)return;window.__mibNoTop=true;"
+        + "var st=document.createElement('style');"
+        + "st.textContent='#scrollUp,#scroll-top,#scrollTop,#to-top,#totop,#back-to-top,#backToTop,.scroll-top,.scrollTop,"
+        + ".scroll-to-top,.scrollToTop,.back-to-top,.backToTop,.to-top,.totop,.go-top,.gotop,.scrollup,.scroll-up,"
+        + "a[href=\"#top\"],[class*=\"scroll-to-top\"],[class*=\"back-to-top\"],[class*=\"scrolltop\"]{display:none!important}';"
+        + "(document.head||document.documentElement).appendChild(st);"
+        + "function hide(){var els=document.querySelectorAll('body *');"
+        + "for(var i=0;i<els.length;i++){var e=els[i];"
+        + "if(getComputedStyle(e).position!=='fixed')continue;"
+        + "var r=e.getBoundingClientRect();"
+        + "if(r.width>0&&r.width<110&&r.height>0&&r.height<110&&r.left>window.innerWidth*0.5&&r.top>window.innerHeight*0.35"
+        + "&&(e.innerText||'').trim().length<2){e.style.setProperty('display','none','important');}}}"
+        + "hide();var k=0;var t=setInterval(function(){hide();if(++k>40)clearInterval(t);},1200);"
+        + "var busy=false;window.addEventListener('scroll',function(){if(busy)return;busy=true;setTimeout(function(){hide();busy=false;},300);},{passive:true});"
+        + "})()";
+
     private static final String DETECT_JS =
         "(function(){var t=((document.body&&document.body.innerText)||'');"
         + "return /жшшир|jshshir/i.test(t)&&document.querySelectorAll('input').length>1;})()";
@@ -412,7 +430,7 @@ public class MainActivity extends Activity {
         + "if(el){setVal(el,v);"
         + "var all=inputs();var ci=all.filter(function(e){return cap.test(sig(e));})[0];"
         + "if(!ci){ci=all[all.indexOf(el)+1];}"
-        + "if(ci&&ci!==el){try{ci.scrollIntoView({block:'center'});ci.focus();}catch(x){}}"
+        + "if(ci&&ci!==el){try{ci.setAttribute('inputmode','numeric');ci.scrollIntoView({block:'center'});ci.focus();}catch(x){}}"
         + "clearInterval(iv);window.__mibAuto=false;return;}}"
         + "if(n%3===1){var tab=findTab();"
         + "if(tab){clicks++;var c=(clicks%2===1)?(tab.closest('a,button,[role=tab],li')||tab):tab;c.click();}"
@@ -485,6 +503,7 @@ public class MainActivity extends Activity {
                     }
                 });
                 view.evaluateJavascript(ZOOM_JS, null);
+                view.evaluateJavascript(HIDE_TOP_JS, null);
                 if (!digits.isEmpty()) view.evaluateJavascript(autoScript(digits), null);
             }
         });
@@ -557,11 +576,11 @@ public class MainActivity extends Activity {
         // 3-qator: natija tugmalari + izoh
         LinearLayout rowB = new LinearLayout(this);
         rowB.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout rOk = iconButton("MIBda bor", R.drawable.ic_check, Color.rgb(22, 163, 74), 12);
-        LinearLayout rNo = iconButton("MIBda yo'q", R.drawable.ic_cancel, Color.rgb(220, 38, 38), 12);
-        LinearLayout rIz = iconButton("Izoh", R.drawable.ic_edit, Color.rgb(124, 58, 237), 12);
-        rowB.addView(rOk, lp(0, dp(46), 1.5f, 0, 0, dp(6), 0));
-        rowB.addView(rNo, lp(0, dp(46), 0.9f, 0, 0, dp(6), 0));
+        LinearLayout rOk = iconButton("MIBda bor", R.drawable.ic_check, Color.rgb(22, 163, 74), 11);
+        LinearLayout rNo = iconButton("MIBda yo'q", R.drawable.ic_cancel, Color.rgb(220, 38, 38), 11);
+        LinearLayout rIz = iconButton("Izoh", R.drawable.ic_edit, Color.rgb(124, 58, 237), 11);
+        rowB.addView(rOk, lp(0, dp(46), 1f, 0, 0, dp(6), 0));
+        rowB.addView(rNo, lp(0, dp(46), 1f, 0, 0, dp(6), 0));
         rowB.addView(rIz, lp(0, dp(46), 1f, 0, 0, 0, 0));
         dock.addView(rowB, lp(-1, -2, 0, 0, dp(8), 0, 0));
         box.addView(dock, new LinearLayout.LayoutParams(-1, -2));
