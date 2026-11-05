@@ -2,7 +2,23 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" id="vp" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<script>
+/* Dastur o'lchami: telefonlarda hamma narsa biroz kichikroq ko'rinadi (UI_SCALE = 0.88). Kattaroq/kichikroq qilish uchun shu sonni o'zgartiring. */
+(function(){
+  var UI_SCALE=0.88;
+  function applyVp(){
+    try{
+      var w=window.screen.width;
+      var vp=document.getElementById('vp');
+      if(vp && w>0 && w<=600){ vp.setAttribute('content','width='+Math.round(w/UI_SCALE)+', maximum-scale=1.0'); }
+      else if(vp){ vp.setAttribute('content','width=device-width, initial-scale=1.0, maximum-scale=1.0'); }
+    }catch(e){}
+  }
+  applyVp();
+  window.addEventListener('orientationchange',function(){ setTimeout(applyVp,350); });
+})();
+</script>
 <title>Andijon Sud Ijro Nazorat</title>
 <meta name="theme-color" content="#0a0e1a">
 <link rel="manifest" href="./manifest.json">
@@ -244,6 +260,11 @@ select{background:var(--bg);border:1px solid var(--b);color:var(--t);padding:5px
 .mib-grid .sinp{margin-bottom:0}
 .mib-frame{width:100%;height:70vh;border:1px solid var(--b);border-radius:8px;background:#fff;margin-top:8px}
 .mib-line{font-size:10px;margin-top:5px;color:var(--c);font-weight:600}
+
+/* ===== Qarzdorlar: hududlar bo'yicha guruhlar ===== */
+.lgrp{margin-bottom:6px}
+.lgrp-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--a);padding:6px 4px;margin:2px 0 6px;border-bottom:1px solid var(--b);cursor:pointer;user-select:none;-webkit-user-select:none}
+.lgrp-h i{font-style:normal;margin-left:4px;color:var(--m)}
 </style>
 </head>
 <body>
@@ -267,9 +288,6 @@ select{background:var(--bg);border:1px solid var(--b);color:var(--t);padding:5px
   </button>
   <button class="nb" onclick="goP('auksion')">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg> Auksion
-  </button>
-  <button class="nb" onclick="goP('rayonlar')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Rayonlar
   </button>
   <button class="nb" onclick="goP('mib')" id="nb-mib">🏛️ MIB</button>
   <button class="nb" onclick="goP('yopilganlar')" id="nb-yopilganlar">
@@ -439,11 +457,6 @@ select{background:var(--bg);border:1px solid var(--b);color:var(--t);padding:5px
     </div>
     <div id="xis-oy-body"></div>
   </div>
-</div>
-
-<div id="p-rayonlar" class="page">
-  <div class="sec-hdr"><div class="sec-tit">🗺️ Rayonlar bo'yicha</div></div>
-  <div id="ray-body"></div>
 </div>
 
 <!-- KALENDAR -->
@@ -1811,7 +1824,7 @@ function goAuksion(){
   if(wasOn) renderAuksion();
 }
 
-const PAGE_ORDER=['home','kalendar','list','vazifalar','auksion','rayonlar','yopilganlar','mib'];
+const PAGE_ORDER=['home','kalendar','list','vazifalar','auksion','mib','yopilganlar'];
 
 function goP(id){
   const pages=document.querySelectorAll('.page');
@@ -1858,7 +1871,6 @@ function goP(id){
   if(id==='list') renderList();
   if(id==='auksion') renderAuksion();
   if(id==='yopilganlar') renderXisobot();
-  if(id==='rayonlar') renderRayonlar();
   if(id==='kalendar') renderKalendar();
   if(id==='vazifalar') renderVazifalar();
   if(id==='mib') mibInit();
@@ -2129,7 +2141,25 @@ function renderList(){
     return true;
   });
   document.getElementById('list-cnt').textContent=r.length+' ta';
-  document.getElementById('list-body').innerHTML=r.length?r.map((d,i)=>card(d,true,'',false,i+1)).join(''):'<div class="empty">Natija topilmadi</div>';
+  /* Hududlar (rayonlar) bo'yicha guruhlab ko'rsatish: sarlavhani bossangiz guruh yig'iladi */
+  const filtered=!!(q||rq||listF!=='all');
+  const gr={};
+  r.forEach(d=>{ const k=d.rayon||"Noma'lum"; (gr[k]=gr[k]||[]).push(d); });
+  const groups=Object.entries(gr).sort((a,b)=>b[1].length-a[1].length);
+  _listGroupNames=groups.map(g=>g[0]);
+  document.getElementById('list-body').innerHTML=r.length?groups.map(([ray,lst],gi)=>{
+    const col=!filtered && !!_listCollapsed[ray];
+    return `<div class="lgrp">
+      <div class="lgrp-h" onclick="listToggleGrp(${gi})"><span>📍 ${mibEsc(ray)}</span><span>${lst.length} ta <i>${col?'▸':'▾'}</i></span></div>
+      ${col?'':lst.map(d=>card(d,true,'',false,null)).join('')}
+    </div>`;
+  }).join(''):'<div class="empty">Natija topilmadi</div>';
+}
+let _listCollapsed={}, _listGroupNames=[];
+function listToggleGrp(i){
+  const k=_listGroupNames[i]; if(k===undefined) return;
+  _listCollapsed[k]=!_listCollapsed[k];
+  renderList();
 }
 
 const AUK_HOLAT_INFO={
@@ -2545,29 +2575,6 @@ function holatModalSaqla(){
   initHome();
 }
 // ---- HOLAT MODAL END ----
-
-function renderRayonlar(){
-  const gr={};
-  DATA.forEach(d=>{
-    const ray=d.rayon||'Noma\'lum';
-    if(!gr[ray]) gr[ray]=[];
-    gr[ray].push(d);
-  });
-  const sorted=Object.entries(gr).sort((a,b)=>b[1].length-a[1].length);
-  document.getElementById('ray-body').innerHTML=sorted.map(([ray,lst])=>`
-    <div class="rayon-grp">
-      <div class="rg-name"><span>📍 ${ray}</span><span>${lst.length} ta</span></div>
-      ${lst.map(d=>{
-        const isNoQid=(d.qid==='yoq'||d.qid===''||!d.qid)&&(hasTur(d,'auto')||hasTur(d,'auto64')||hasTur(d,'auksion')||hasTur(d,'auksion64'));
-        return `
-        <div class="dcard" onclick="openModal(${d.n})" style="padding:8px;margin-bottom:4px">
-          <div style="font-size:13px;font-weight:700">${d.n}. ${d.fio}</div>
-          <div class="dmeta" style="margin-top:3px">${turBadge(d)} ${restBadge(d)} ${qidBadge(d)}${isNoQid?'<span class="dbadge b-noqid" style="margin-left:4px">🚨 Qidiruv yo\'q!</span>':''}</div>
-        </div>
-      `;}).join('')}
-    </div>
-  `).join('');
-}
 
 // HOME STATS
 function initHome(){
